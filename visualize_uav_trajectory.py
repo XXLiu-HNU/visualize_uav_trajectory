@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-@file    : visualize_uav_trajectory.py
-@author  : Xingxun Liu
-@date    : 2024-12-21
-@brief   : 可视化无人机的运动轨迹。
-"""
 import cv2
 import numpy as np
 
-def overlay_drone_photo_on_background(video_path, output_image_path, sample_interval=5, diff_threshold=30, enhance_factor=2):
+def overlay_drone_photo_on_background(video_path, output_image_path, sample_interval=5, diff_threshold=30):
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
@@ -43,18 +36,26 @@ def overlay_drone_photo_on_background(video_path, output_image_path, sample_inte
             # 二值化处理，提取变化区域
             _, diff_mask = cv2.threshold(frame_diff, diff_threshold, 255, cv2.THRESH_BINARY)
 
+            # Debug: visualize the diff_mask (optional)
+            # cv2.imwrite(f"debug_diff_mask_{frame_count}.jpg", diff_mask)
+
             # 提取运动区域的彩色部分
             motion_only = cv2.bitwise_and(frame, frame, mask=diff_mask)
 
-            # **增强运动区域的亮度或颜色**
-            # 将运动区域像素值加深（增强因子为 enhance_factor）
-            motion_only = cv2.convertScaleAbs(motion_only, alpha=enhance_factor, beta=0.1)
+            # Debug: visualize the motion_only before enhancement (optional)
+            # cv2.imwrite(f"debug_motion_only_before_{frame_count}.jpg", motion_only)
 
             # 保留背景非运动部分
             static_background = cv2.bitwise_and(background_image, background_image, mask=cv2.bitwise_not(diff_mask))
 
+            # Debug: visualize the static_background (optional)
+            # cv2.imwrite(f"debug_static_background_{frame_count}.jpg", static_background)
+
             # 将运动区域覆盖到背景对应位置
             background_image = cv2.add(static_background, motion_only)
+
+            # Debug: visualize the background image after update (optional)
+            # cv2.imwrite(f"debug_background_image_{frame_count}.jpg", background_image)
 
             # 更新前一帧
             prev_gray = gray_frame
@@ -72,9 +73,8 @@ def overlay_drone_photo_on_background(video_path, output_image_path, sample_inte
 
 # 调用函数
 video_path = "test_video.mp4"  # 视频输入
-output_image_path = "drone_trajectory_with_enhanced_photo.jpg" # 图片输出
-sample_interval = 2   # 采样率
+output_image_path = "drone_trajectory_with_frame.jpg" # 图片输出
+sample_interval = 5   # 采样率
 diff_threshold = 100  # 差分阈值，越小对场景越敏感
-enhance_factor = 1.2  # 轨迹增强因子，增大强度
 # 保存图像
-overlay_drone_photo_on_background(video_path, output_image_path, sample_interval, diff_threshold, enhance_factor)
+overlay_drone_photo_on_background(video_path, output_image_path, sample_interval, diff_threshold)
