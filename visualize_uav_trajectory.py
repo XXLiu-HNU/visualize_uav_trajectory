@@ -1,26 +1,25 @@
 import cv2
 import numpy as np
+import tkinter as tk
+from tkinter import Scale, HORIZONTAL, Button
+from PIL import Image, ImageTk
+from tkinter import filedialog
 
-def overlay_drone_photo_on_background(video_path, output_image_path, sample_interval=5, diff_threshold=30):
+def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size):
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
         print(f"无法打开视频文件: {video_path}！请检查路径。")
-        return
+        return None
 
-    ret, prev_frame = cap.read()
+    ret, first_frame = cap.read()
     if not ret:
         print("无法读取视频的第一帧！")
-        return
+        return None
 
-    prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-
-    # 初始化背景图片
-    background_image = prev_frame.copy()
-    height, width, channels = prev_frame.shape
-
+    first_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
+    background_image = first_frame.copy()
     frame_count = 0
-    sampled_frame_count = 0
 
     while True:
         ret, frame = cap.read()
@@ -29,52 +28,69 @@ def overlay_drone_photo_on_background(video_path, output_image_path, sample_inte
 
         if frame_count % sample_interval == 0:
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-            # 计算帧差
-            frame_diff = cv2.absdiff(gray_frame, prev_gray)
-
-            # 二值化处理，提取变化区域
+            frame_diff = cv2.absdiff(gray_frame, first_gray)
             _, diff_mask = cv2.threshold(frame_diff, diff_threshold, 255, cv2.THRESH_BINARY)
-
-            # Debug: visualize the diff_mask (optional)
-            # cv2.imwrite(f"debug_diff_mask_{frame_count}.jpg", diff_mask)
-
-            # 提取运动区域的彩色部分
-            motion_only = cv2.bitwise_and(frame, frame, mask=diff_mask)
-
-            # Debug: visualize the motion_only before enhancement (optional)
-            # cv2.imwrite(f"debug_motion_only_before_{frame_count}.jpg", motion_only)
-
-            # 保留背景非运动部分
-            static_background = cv2.bitwise_and(background_image, background_image, mask=cv2.bitwise_not(diff_mask))
-
-            # Debug: visualize the static_background (optional)
-            # cv2.imwrite(f"debug_static_background_{frame_count}.jpg", static_background)
-
-            # 将运动区域覆盖到背景对应位置
-            background_image = cv2.add(static_background, motion_only)
-
-            # Debug: visualize the background image after update (optional)
-            # cv2.imwrite(f"debug_background_image_{frame_count}.jpg", background_image)
-
-            # 更新前一帧
-            prev_gray = gray_frame
-            sampled_frame_count += 1
+            kernel = np.ones((kernel_size, kernel_size), np.uint8)
+            dilated_mask = cv2.dilate(diff_mask, kernel, iterations=1)
+            
+            motion_only = cv2.bitwise_and(frame, frame, mask=dilated_mask)
+            background_image[dilated_mask == 255] = motion_only[dilated_mask == 255]
 
         frame_count += 1
-        if frame_count % 100 == 0:
-            print(f"已处理总帧数: {frame_count}，采样帧数: {sampled_frame_count}")
-
-    # 保存最终图像
-    cv2.imwrite(output_image_path, background_image)
-    print(f"轨迹图片已保存到: {output_image_path}")
 
     cap.release()
+    return background_image
 
-# 调用函数
-video_path = "test_video.mp4"  # 视频输入
-output_image_path = "drone_trajectory_with_frame.jpg" # 图片输出
-sample_interval = 5   # 采样率
-diff_threshold = 100  # 差分阈值，越小对场景越敏感
-# 保存图像
-overlay_drone_photo_on_background(video_path, output_image_path, sample_interval, diff_threshold)
+def update_image():
+    sample_interval = sample_interval_scale.get()
+    diff_threshold = diff_threshold_scale.get()
+    kernel_size = kernel_size_scale.get()
+    result_image = overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size)
+    if result_image is not None:
+        result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(result_image_rgb)
+        imgtk = ImageTk.PhotoImage(image=img)
+        result_label.config(image=imgtk)
+        result_label.image = imgtk
+        # 将图像保存到全局变量中，以便稍后保存
+        global saved_image
+        saved_image = result_image
+
+def save_image():
+    if saved_image is not None:
+        # 打开文件保存对话框
+        file_path = filedialog.asksaveasfilename(defaultextension=".png",
+                                                 filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+        if file_path:
+            # 保存图像
+            cv2.imwrite(file_path, saved_image)
+            print(f"图像已保存到: {file_path}")
+
+video_path = "test_video.mp4"
+saved_image = None  # 用于保存当前图像
+
+root = tk.Tk()
+root.title("无人机轨迹参数调整")
+
+sample_interval_scale = Scale(root, from_=1, to_=100, orient=HORIZONTAL, label="采样间隔")
+sample_interval_scale.set(10)
+sample_interval_scale.pack()
+
+diff_threshold_scale = Scale(root, from_=1, to_=255, orient=HORIZONTAL, label="差分阈值")
+diff_threshold_scale.set(30)
+diff_threshold_scale.pack()
+
+kernel_size_scale = Scale(root, from_=1, to_=50, orient=HORIZONTAL, label="膨胀核大小")
+kernel_size_scale.set(15)
+kernel_size_scale.pack()
+
+update_button = Button(root, text="更新图像", command=update_image)
+update_button.pack()
+
+save_button = Button(root, text="保存图片", command=save_image)
+save_button.pack()
+
+result_label = tk.Label(root)
+result_label.pack()
+
+root.mainloop()
