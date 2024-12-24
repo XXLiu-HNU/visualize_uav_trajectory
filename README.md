@@ -5,3 +5,5 @@ Still shot videos:
 
 And the result:
 ![result](./example/photo.jpg)
+
+However, maybe PhotoShop is better -> <-
