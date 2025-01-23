@@ -2,14 +2,14 @@ import os
 import cv2
 import numpy as np
 import tkinter as tk
-from tkinter import Scale, HORIZONTAL, Button, Spinbox
+from tkinter import Scale, HORIZONTAL, Button
 from PIL import Image, ImageTk
 from tkinter import filedialog
 
 # 常量定义
-DEFAULT_DIR = os.path.join(os.getcwd(), "images") # 默认保存路径
-DEFAULT_FILE = "default.png" # 默认保存文件名
-DISPLAY_HEIGHT_RATIO = 1.8 # 默认显示比例
+DEFAULT_DIR = os.path.join(os.getcwd(), "images")   # 默认保存路径
+DEFAULT_FILE = "default.png"                        # 默认保存文件名
+DISPLAY_HEIGHT_RATIO = 1.8                          # 默认显示比例
 
 def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size):
     cap = cv2.VideoCapture(video_path)
