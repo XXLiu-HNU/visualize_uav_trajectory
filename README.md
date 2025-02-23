@@ -1,4 +1,7 @@
 # A tool to visualize the trajectory of drones in videos
+
+## If you have better ideas, welcome to propose them!! Please kindly star ⭐ this project if it helps you.
+
 Still shot videos:
 
 ![video](./example/video.gif)
