@@ -14,3 +14,7 @@ However, maybe PhotoShop is better -> <-
 <img width="855" alt="1735143264533" src="https://github.com/user-attachments/assets/14de6857-0d1f-4aa2-969c-53ee77a51990" />
 
 ![test](https://github.com/user-attachments/assets/6120bafa-da8a-4590-a8a5-3a4fae71e0cc)
+
+# Recommend
+
+This one is also good[composite_image](https://github.com/RENyunfan/composite_image)
