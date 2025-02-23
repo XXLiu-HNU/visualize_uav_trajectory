@@ -1,9 +1,4 @@
-example/
-
-images/
-
-*.mp4
-
-*.png
-
-.idea/
+.gitignore
+my_video.mp4
+my_video2.mp4
+/images
