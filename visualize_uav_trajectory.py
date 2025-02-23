@@ -66,7 +66,7 @@ def save_image():
             cv2.imwrite(file_path, saved_image)
             print(f"图像已保存到: {file_path}")
 
-video_path = "test_video.mp4"
+video_path = "example_video.mp4"
 saved_image = None  # 用于保存当前图像
 
 root = tk.Tk()
