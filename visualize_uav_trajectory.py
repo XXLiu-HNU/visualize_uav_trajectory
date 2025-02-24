@@ -16,6 +16,9 @@ def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel
         print(f"无法打开视频文件: {video_path}！请检查路径。")
         return None
 
+    # 获取视频的总帧数
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
     ret, first_frame = cap.read()
     if not ret:
         print("无法读取视频的第一帧！")
@@ -31,17 +34,36 @@ def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel
             break
 
         if frame_count % sample_interval == 0:
+            # 转换当前帧为灰度图
             gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # 计算当前帧与第一帧的差异
             frame_diff = cv2.absdiff(gray_frame, first_gray)
             _, diff_mask = cv2.threshold(frame_diff, diff_threshold, 255, cv2.THRESH_BINARY)
+            
+            # 形态学膨胀操作
             kernel = np.ones((kernel_size, kernel_size), np.uint8)
             dilated_mask = cv2.dilate(diff_mask, kernel, iterations=1)
+            
+            # 提取运动区域
             motion_only = cv2.bitwise_and(frame, frame, mask=dilated_mask)
-            background_image[dilated_mask == 255] = motion_only[dilated_mask == 255]
+
+            # 计算透明度：从20%逐渐增加到100%
+            alpha = 0.2 + 0.8 * (frame_count / total_frames)  # 逐渐增加透明度
+            beta = 1 - alpha  # 背景图的透明度
+
+            # 使用加权平均法进行透明叠加
+            # 只在掩膜为255的地方进行加权叠加
+            for c in range(3):  # 3通道的图像，逐通道处理
+                background_image[:, :, c] = (background_image[:, :, c] * beta + motion_only[:, :, c] * alpha) * (dilated_mask == 255) + background_image[:, :, c] * (dilated_mask != 255)
 
         frame_count += 1
 
     cap.release()
+
+    # 关闭所有图像窗口
+    cv2.destroyAllWindows()
+
     return background_image
 
 def update_image():
