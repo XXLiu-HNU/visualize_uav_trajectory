@@ -10,7 +10,7 @@ DEFAULT_DIR = os.path.join(os.getcwd(), "images")
 DEFAULT_FILE = "default.png"
 DISPLAY_HEIGHT_RATIO = 1.8
 
-def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size):
+def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size, start_time, end_time, alpha_start, alpha_end):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print(f"无法打开视频文件: {video_path}！请检查路径。")
@@ -18,6 +18,10 @@ def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel
 
     # 获取视频的总帧数
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_rate = cap.get(cv2.CAP_PROP_FPS)
+
+    # 跳转到指定的起始时间
+    cap.set(cv2.CAP_PROP_POS_MSEC, start_time * 1000)  # 起始时间（秒转毫秒）
 
     ret, first_frame = cap.read()
     if not ret:
@@ -31,6 +35,10 @@ def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel
     while True:
         ret, frame = cap.read()
         if not ret:
+            break
+
+        # 如果视频已经到达结束时间，停止
+        if cap.get(cv2.CAP_PROP_POS_MSEC) / 1000 >= end_time:
             break
 
         if frame_count % sample_interval == 0:
@@ -48,8 +56,8 @@ def overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel
             # 提取运动区域
             motion_only = cv2.bitwise_and(frame, frame, mask=dilated_mask)
 
-            # 计算透明度：从20%逐渐增加到100%
-            alpha = 0.2 + 0.8 * (frame_count / total_frames)  # 逐渐增加透明度
+            # 计算透明度：从 alpha_start 到 alpha_end
+            alpha = alpha_start + (alpha_end - alpha_start) * (frame_count / total_frames)  # 透明度逐渐变化
             beta = 1 - alpha  # 背景图的透明度
 
             # 使用加权平均法进行透明叠加
@@ -71,11 +79,15 @@ def update_image():
         sample_interval = int(sample_interval_entry.get())
         diff_threshold = int(diff_threshold_entry.get())
         kernel_size = int(kernel_size_entry.get())
+        start_time = float(start_time_entry.get())
+        end_time = float(end_time_entry.get())
+        alpha_start = float(alpha_start_entry.get())
+        alpha_end = float(alpha_end_entry.get())
     except ValueError:
         print("请输入有效的数值！")
         return
 
-    result_image = overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size)
+    result_image = overlay_drone_trajectory(video_path, sample_interval, diff_threshold, kernel_size, start_time, end_time, alpha_start, alpha_end)
     if result_image is not None:
         result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(result_image_rgb)
@@ -142,6 +154,26 @@ Label(root, text="膨胀核大小").pack()
 kernel_size_entry = Entry(root)
 kernel_size_entry.pack()
 kernel_size_entry.insert(0, "15")
+
+Label(root, text="视频起始时间（秒）").pack()
+start_time_entry = Entry(root)
+start_time_entry.pack()
+start_time_entry.insert(0, "0")
+
+Label(root, text="视频结束时间（秒）").pack()
+end_time_entry = Entry(root)
+end_time_entry.pack()
+end_time_entry.insert(0, "10")
+
+Label(root, text="透明度起始值").pack()
+alpha_start_entry = Entry(root)
+alpha_start_entry.pack()
+alpha_start_entry.insert(0, "0.2")
+
+Label(root, text="透明度最终值").pack()
+alpha_end_entry = Entry(root)
+alpha_end_entry.pack()
+alpha_end_entry.insert(0, "1")
 
 update_button = Button(root, text="更新图像", command=update_image)
 update_button.pack()
