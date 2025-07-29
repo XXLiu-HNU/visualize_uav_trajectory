@@ -4,12 +4,12 @@
 
 Still shot videos:
 
-![video](./example/video.gif)
+![gif](./example/speed2-1.gif)
 
 And the result:
-![result](./example/photo.jpg)
+![result](./example/4tree.png)
 
-However, maybe PhotoShop is better -> <-
+Although sometimes it can be wrong, this tool works well in certain circumstances. If you are looking for higher quality images, you may need to do it manually!
 
 ## Update
 
