@@ -2,6 +2,15 @@
 
 ## If you have better ideas, welcome to propose them!! Please kindly star ⭐ this project if it helps you
 
+## Modes
+
+This project now keeps **both** implementations:
+
+- `legacy`: the original motion-overlay method based on frame differencing against the first frame
+- `improved`: an optional hybrid mode that keeps the original overlay effect and adds a smoothed tracked trajectory line on top
+
+The original implementation still exists and is not replaced. The improved result is only a selectable mode.
+
 Still shot videos:
 
 ![gif](./example/speed2-1.gif)
@@ -22,6 +31,21 @@ Although sometimes it can be wrong, this tool works well in certain circumstance
     ![result](./example/update2.png)
 3. Add more parameters and set gradient transparency overlay
     ![new_ui](./example/update3.jpg)
+4. Added an optional improved visualization mode:
+   - preserve the original `legacy` output
+   - track the drone trajectory with a lightweight rule-based tracker
+   - smooth the trajectory and draw a clean highlight line on top of the original overlay
+   - support CLI export for `legacy`, `improved`, and comparison outputs
+
+## Improved Example
+
+Improved hybrid output:
+
+![improved](./example/example_improved.png)
+
+Legacy vs improved comparison:
+
+![comparison](./example/example_comparison.png)
 
 ## Parameter Description
 
@@ -67,3 +91,36 @@ If the speed of the drone changes in the video, the trajectory may not be good.
 ### The influence of background
 
 If the background moves, such as lighting changes or pedestrian movement, the superposition may be incorrect.
+
+## CLI Usage
+
+Export the original implementation (`legacy`):
+
+```bash
+python3 visualize_uav_trajectory.py \
+  --video example_video.mp4 \
+  --method legacy \
+  --output images/example_legacy.png
+```
+
+Export the optional improved result:
+
+```bash
+python3 visualize_uav_trajectory.py \
+  --video example_video.mp4 \
+  --method improved \
+  --output images/example_improved.png
+```
+
+Export a side-by-side comparison image:
+
+```bash
+python3 visualize_uav_trajectory.py \
+  --video example_video.mp4 \
+  --compare \
+  --output images/example_comparison.png
+```
+
+If you omit `--video`, the script starts the Tkinter GUI. The original implementation remains available in code as the `legacy` mode, and the improved mode is an extra option for CLI export and further extension.
+
+Note: the `images/` directory is ignored by git. For repository examples shown in this README, the exported result images are copied into `example/` before commit.
