@@ -11,6 +11,15 @@ This project now keeps **both** implementations:
 
 The original implementation still exists and is not replaced. The improved result is only a selectable mode.
 
+## GUI Highlights
+
+- GUI now supports explicit mode switching between `legacy` and `improved`
+- improved mode exposes selectable line colors, line thickness, and glow strength
+- GUI shows status and failure messages directly inside the window instead of relying on terminal output
+- built-in recommended parameter presets are available for both modes
+
+![new_gui](./example/new_gui.png)
+
 Still shot videos:
 
 ![gif](./example/speed2-1.gif)
@@ -30,7 +39,7 @@ Although sometimes it can be wrong, this tool works well in certain circumstance
 
     ![result](./example/update2.png)
 3. Add more parameters and set gradient transparency overlay
-    ![new_ui](./example/update3.jpg)
+    ![new_ui](./example/new_gui.png)
 4. Added an optional improved visualization mode:
    - preserve the original `legacy` output
    - track the drone trajectory with a lightweight rule-based tracker
@@ -124,3 +133,13 @@ python3 visualize_uav_trajectory.py \
 If you omit `--video`, the script starts the Tkinter GUI. The original implementation remains available in code as the `legacy` mode, and the improved mode is an extra option for CLI export and further extension.
 
 Note: the `images/` directory is ignored by git. For repository examples shown in this README, the exported result images are copied into `example/` before commit.
+
+## Project Structure
+
+The code is split to make future maintenance easier:
+
+- `visualize_uav_trajectory.py`: thin entry point
+- `uav_vis/config.py`: shared constants and style definitions
+- `uav_vis/core.py`: legacy rendering, improved tracking, and image generation logic
+- `uav_vis/gui.py`: Tkinter GUI and in-window status handling
+- `uav_vis/cli.py`: CLI parser and command execution flow
