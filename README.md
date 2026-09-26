@@ -1,48 +1,70 @@
 # A tool to visualize the trajectory of drones in videos
 
-## If you have better ideas, welcome to propose them!! Please kindly star ⭐ this project if it helps you
+## 快速开始 / Quick start
 
-## Reusable agent skill / 可复用 Skill
+**推荐使用 Skill**：把飞行视频和参考图交给 Codex，生成渐变轨迹叠影、末端动作放大图，并保留关键帧配置和复现命令。
 
-本仓库提供 [`visualize-uav-trajectory`](skills/visualize-uav-trajectory/SKILL.md)，
-用于让 Codex 等支持 Agent Skills 的助手从真实视频完成：选取动作片段、检查关键帧、
-局部蒙版渐变叠影、末端原帧核对和可复现导出。适合窗帘/背景运动、载荷分离、
-末端放置/抛投等仅靠全画面差分不够干净的情况。
+### 1. 在本仓库中直接调用
 
-仓库的 `.agents/skills/visualize-uav-trajectory` 链接到同一份 skill，
-在此仓库中开启 Codex 任务即可发现。复制或安装整个
-`skills/visualize-uav-trajectory/` 目录也可独立使用，无需 GUI 或本仓库的其他代码。
-若要在其他项目中使用，可向 Codex 的 `$skill-installer` 提供：
-
-```text
-从 XXLiu-HNU/visualize_uav_trajectory 安装 skills/visualize-uav-trajectory
-```
-
-安装后调用示例：
+在 Codex 中打开本仓库，新建任务并输入（替换成你的文件路径）：
 
 ```text
 使用 $visualize-uav-trajectory，处理 /data/flight.mp4。
 参考 /data/ref.png，只展示运输至释放阶段，输出原分辨率叠影和末端局部放大。
 ```
 
-仓库扫描和安装方式见 [Codex 官方 Skills 说明](https://learn.chatgpt.com/docs/build-skills)。
-如果 skill 尚未出现在列表，重新启动 Codex。未安装时也可以直接让助手阅读上面的 `SKILL.md`。
+仓库已包含 `.agents/skills/visualize-uav-trajectory` 发现入口。如果列表中尚未出现，
+重新启动 Codex；也可以直接让助手读取 [SKILL.md](skills/visualize-uav-trajectory/SKILL.md)。
+没有参考图时省略第二行中的参考图路径，并描述想展示的动作范围即可。
 
-独立脚本只需 `numpy`、`opencv-python-headless`（已安装带 GUI 的 OpenCV 也可用）。
-命令从仓库根目录运行：
+### 2. 在其他项目中安装后调用
 
-```bash
-python3 skills/visualize-uav-trajectory/scripts/video_chronophoto.py inspect \
-  --video /data/flight.mp4 --times 0,10,20 --output images/inspection
-python3 skills/visualize-uav-trajectory/scripts/video_chronophoto.py render \
-  --video /data/flight.mp4 --config /data/keyframes.json --output images/render
-python3 -m unittest discover -s tests -v
+先向 Codex 输入一次：
+
+```text
+使用 $skill-installer，从 XXLiu-HNU/visualize_uav_trajectory
+安装 skills/visualize-uav-trajectory。
 ```
 
-配置格式见 [rendering.md](skills/visualize-uav-trajectory/references/rendering.md)。
-输出原分辨率合成图、末端原帧、蒙版审核图、逐帧蒙版和 manifest。
-选框/蒙版需要助手或人工检查；这不是通用自动跟踪器，也不从视频推断米制速度或落点精度。
-原有 `legacy` / `improved` CLI 和 GUI 保持兼容。
+安装后使用上面的 `$visualize-uav-trajectory` 提示词。
+整个 skill 可独立使用，无需 GUI 或本仓库其他代码。
+安装与发现机制见 [Codex 官方 Skills 说明](https://learn.chatgpt.com/docs/build-skills)。
+
+### 3. 直接运行脚本或 GUI
+
+Skill 脚本需要 Python 3、NumPy 和 OpenCV。已有 OpenCV 即可使用；缺依赖时，
+可在项目虚拟环境中安装 `numpy opencv-python-headless`。
+从仓库根目录执行：
+
+```bash
+# 查看视频元数据、带时间的联系表和原始关键帧
+python3 skills/visualize-uav-trajectory/scripts/video_chronophoto.py inspect \
+  --video /data/flight.mp4 --times 0,10,20 --output images/inspection
+
+# 按实际画面填写关键帧配置后生成叠影
+python3 skills/visualize-uav-trajectory/scripts/video_chronophoto.py render \
+  --video /data/flight.mp4 --config /data/keyframes.json --output images/render
+```
+
+`keyframes.json` 需要按视频选帧、取框，格式见 [配置说明](skills/visualize-uav-trajectory/references/rendering.md)。
+输出包括 `composite.png`、`terminal.png`、`mask_audit.jpg`、逐帧蒙版和 `manifest.json`。
+选框与蒙版需要检查，米制速度和落点精度需要额外数据。
+
+使用原有图形界面（另外需要 Tkinter 和可用图形桌面）：
+
+```bash
+python3 visualize_uav_trajectory.py
+```
+
+原有 `legacy` / `improved` 命令行用法见下方 [CLI Usage](#cli-usage)。
+
+## Reusable agent skill / 可复用 Skill
+
+[Skill 完整流程](skills/visualize-uav-trajectory/SKILL.md)涵盖视频检查、片段选择、
+局部蒙版渐变叠影、末端原帧核对和可复现导出，适用于背景运动、载荷分离和末端放置/抛投场景。
+它是人工辅助的实景合成流程，不是通用自动跟踪器；原有 CLI 和 GUI 保持兼容。
+
+脚本测试：`python3 -m unittest discover -s tests -v`。
 
 ## Modes
 
@@ -185,3 +207,5 @@ The code is split to make future maintenance easier:
 - `uav_vis/core.py`: legacy rendering, improved tracking, and image generation logic
 - `uav_vis/gui.py`: Tkinter GUI and in-window status handling
 - `uav_vis/cli.py`: CLI parser and command execution flow
+
+If you have better ideas, welcome to propose them! Please kindly star ⭐ this project if it helps you.
