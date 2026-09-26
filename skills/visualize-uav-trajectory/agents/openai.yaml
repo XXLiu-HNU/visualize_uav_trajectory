@@ -1,0 +1,4 @@
+interface:
+  display_name: "无人机实景轨迹叠影"
+  short_description: "从真实飞行视频生成渐变机影、末端动作图和可复查的关键帧蒙版"
+  default_prompt: "使用 $visualize-uav-trajectory，根据我的飞行视频和参考图制作运输至释放阶段的实景轨迹叠影，保留关键帧配置和复现命令。"
